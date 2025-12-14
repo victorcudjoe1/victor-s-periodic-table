@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Periodic Table — Victor Delali Cudjoe</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    margin: 0;
+    padding: 0;
+}
+header, footer {
+    text-align: center;
+    padding: 10px;
+    background: #161b22;
+    color: #58a6ff;
+    font-weight: bold;
+}
+h1 {
+    text-align: center;
+    margin: 15px 0;
+}
+.table {
+    display: grid;
+    grid-template-columns: repeat(18, 1fr);
+    gap: 4px;
+    padding: 8px;
+}
+.element {
+    border-radius: 6px;
+    padding: 6px;
+    text-align: center;
+    font-size: 12px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.element:hover {
+    transform: scale(1.08);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.7);
+}
+.symbol {font-size: 16px; font-weight: bold;}
+.number {font-size: 10px; color: #c9d1d9;}
+
+/* COLORS */
+.Nonmetal {background: #3fb950;}
+.NobleGas {background: #ff6f61;}
+.AlkaliMetal {background: #fca311;}
+.AlkalineEarthMetal {background: #f5cb5c;}
+.TransitionMetal {background: #8ecae6;}
+.Metalloid {background: #f7b267;}
+.Halogen {background: #6a4c93;}
+.Lanthanide {background: #ffb4a2;}
+.Actinide {background: #b5ead7;}
+.PostTransitionMetal {background: #ffddc1;}
+
+/* MODAL */
+#overlay {
+    display: none;
+    position: fixed;
+    top:0; left:0; width:100%; height:100%;
+    background: rgba(0,0,0,0.75);
+    z-index: 5;
+}
+.modal {
+    display: none;
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background:#161b22;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.8);
+    max-width: 380px;
+    color: #c9d1d9;
+    z-index: 10;
+}
+.modal h2{color:#58a6ff;}
+.modal button{margin-top:8px; padding:6px 12px; cursor:pointer;}
+input[type="text"], input[type="number"] {
+    margin: 8px auto;
+    display: block;
+    padding: 6px;
+    width: 200px;
+    border-radius: 5px;
+    border: none;
+}
+</style>
+</head>
+<body>
+
+<header>Created by Victor Delali Cudjoe</header>
+<h1>Periodic Table</h1>
+
+<input type="text" id="search" placeholder="Search by symbol, name, or number">
+
+<div class="table" id="table"></div>
+
+<footer>Created by Victor Delali Cudjoe</footer>
+
+<div id="overlay"></div>
+<div class="modal" id="modal">
+    <h2 id="modal-name"></h2>
+    <p id="modal-symbol"></p>
+    <p id="modal-atomic"></p>
+    <p id="modal-details"></p>
+    <h3>Mole Calculator</h3>
+    <input type="number" id="grams" placeholder="Grams">
+    <input type="number" id="moles" placeholder="Moles">
+    <input type="number" id="atoms" placeholder="Atoms">
+    <button id="calcBtn">Calculate</button>
+    <button id="closeBtn">Close</button>
+</div>
+
+<script>
+// -------- ELEMENT DATA (All 118 elements) --------
+const elements = [
+{number:1,symbol:"H",name:"Hydrogen",weight:1.008,category:"Nonmetal",phase:"Gas",density:0.00008988,melting:14.01,boiling:20.28,electronegativity:2.2,electron:"1s1",shells:[1],isotopes:["H‑1","H‑2"],use:"Fuel, industrial chemicals"},
+{number:2,symbol:"He",name:"Helium",weight:4.0026,category:"NobleGas",phase:"Gas",density:0.0001786,melting:0.95,boiling:4.22,electronegativity:null,electron:"1s2",shells:[2],isotopes:["He‑3","He‑4"],use:"Coolants, balloons"},
+{number:3,symbol:"Li",name:"Lithium",weight:6.94,category:"AlkaliMetal",phase:"Solid",density:0.534,melting:453.65,boiling:1603,electronegativity:0.98,electron:"[He]2s1",shells:[2,1],isotopes:["Li‑6","Li‑7"],use:"Batteries"},
+{number:4,symbol:"Be",name:"Beryllium",weight:9.0122,category:"AlkalineEarthMetal",phase:"Solid",density:1.85,melting:1560,boiling:2742,electronegativity:1.57,electron:"[He]2s2",shells:[2,2],isotopes:["Be‑9"],use:"Alloys"},
+{number:5,symbol:"B",name:"Boron",weight:10.81,category:"Metalloid",phase:"Solid",density:2.34,melting:2349,boiling:4200,electronegativity:2.04,electron:"[He]2s2 2p1",shells:[2,3],isotopes:["B‑10","B‑11"],use:"Glass, detergents"},
+{number:6,symbol:"C",name:"Carbon",weight:12.011,category:"Nonmetal",phase:"Solid",density:2.267,melting:null,boiling:null,electronegativity:2.55,electron:"[He]2s2 2p2",shells:[2,4],isotopes:["C‑12","C‑13"],use:"Organic compounds"},
+{number:7,symbol:"N",name:"Nitrogen",weight:14.007,category:"Nonmetal",phase:"Gas",density:0.0012506,melting:63.15,boiling:77.36,electronegativity:3.04,electron:"[He]2s2 2p3",shells:[2,5],isotopes:["N‑14","N‑15"],use:"Fertilizers"},
+{number:8,symbol:"O",name:"Oxygen",weight:15.999,category:"Nonmetal",phase:"Gas",density:0.001429,melting:54.36,boiling:90.20,electronegativity:3.44,electron:"[He]2s2 2p4",shells:[2,6],isotopes:["O‑16","O‑17"],use:"Respiration"},
+{number:9,symbol:"F",name:"Fluorine",weight:18.998,category:"Halogen",phase:"Gas",density:0.001696,melting:53.53,boiling:85.03,electronegativity:3.98,electron:"[He]2s2 2p5",shells:[2,7],isotopes:["F‑19"],use:"Toothpaste"},
+{number:10,symbol:"Ne",name:"Neon",weight:20.180,category:"NobleGas",phase:"Gas",density:0.0008999,melting:24.56,boiling:27.07,electronegativity:null,electron:"[He]2s2 2p6",shells:[2,8],isotopes:["Ne-20","Ne-21","Ne-22"],use:"Lighting, signs"},
+{number:11,symbol:"Na",name:"Sodium",weight:22.990,category:"AlkaliMetal",phase:"Solid",density:0.971,melting:370.87,boiling:1156,electronegativity:0.93,electron:"[Ne]3s1",shells:[2,8,1],isotopes:["Na-23"],use:"Table salt, soap"},
+{number:12,symbol:"Mg",name:"Magnesium",weight:24.305,category:"AlkalineEarthMetal",phase:"Solid",density:1.738,melting:923,boiling:1363,electronegativity:1.31,electron:"[Ne]3s2",shells:[2,8,2],isotopes:["Mg-24","Mg-25","Mg-26"],use:"Alloys, fireworks"},
+{number:13,symbol:"Al",name:"Aluminum",weight:26.982,category:"PostTransitionMetal",phase:"Solid",density:2.70,melting:933.47,boiling:2792,electronegativity:1.61,electron:"[Ne]3s2 3p1",shells:[2,8,3],isotopes:["Al-27"],use:"Foil, aircraft parts"},
+{number:14,symbol:"Si",name:"Silicon",weight:28.085,category:"Metalloid",phase:"Solid",density:2.33,melting:1687,boiling:3538,electronegativity:1.90,electron:"[Ne]3s2 3p2",shells:[2,8,4],isotopes:["Si-28","Si-29","Si-30"],use:"Semiconductors, glass"},
+{number:15,symbol:"P",name:"Phosphorus",weight:30.974,category:"Nonmetal",phase:"Solid",density:1.823,melting:317.3,boiling:550,electronegativity:2.19,electron:"[Ne]3s2 3p3",shells:[2,8,5],isotopes:["P-31"],use:"Fertilizers, matches"},
+{number:16,symbol:"S",name:"Sulfur",weight:32.06,category:"Nonmetal",phase:"Solid",density:2.07,melting:388.36,boiling:717.8,electronegativity:2.58,electron:"[Ne]3s2 3p4",shells:[2,8,6],isotopes:["S-32","S-33","S-34","S-36"],use:"Sulfuric acid, vulcanization"},
+{number:17,symbol:"Cl",name:"Chlorine",weight:35.45,category:"Halogen",phase:"Gas",density:0.003214,melting:171.6,boiling:239.11,electronegativity:3.16,electron:"[Ne]3s2 3p5",shells:[2,8,7],isotopes:["Cl-35","Cl-37"],use:"Disinfectants, PVC"},
+{number:18,symbol:"Ar",name:"Argon",weight:39.948,category:"NobleGas",phase:"Gas",density:0.001784,melting:83.81,boiling:87.3,electronegativity:null,electron:"[Ne]3s2 3p6",shells:[2,8,8],isotopes:["Ar-36","Ar-38","Ar-40"],use:"Lighting, welding"},
+{number:19,symbol:"K",name:"Potassium",weight:39.098,category:"AlkaliMetal",phase:"Solid",density:0.862,melting:336.53,boiling:1032,electronegativity:0.82,electron:"[Ar]4s1",shells:[2,8,8,1],isotopes:["K-39","K-40","K-41"],use:"Fertilizers, soap"},
+{number:20,symbol:"Ca",name:"Calcium",weight:40.078,category:"AlkalineEarthMetal",phase:"Solid",density:1.55,melting:1115,boiling:1757,electronegativity:1.00,electron:"[Ar]4s2",shells:[2,8,8,2],isotopes:["Ca-40","Ca-42","Ca-43","Ca-44","Ca-46","Ca-48"],use:"Cement, dietary supplement"},
+{number:21,symbol:"Sc",name:"Scandium",weight:44.956,category:"TransitionMetal",phase:"Solid",density:2.985,melting:1814,boiling:3109,electronegativity:1.36,electron:"[Ar]3d1 4s2",shells:[2,8,9,2],isotopes:["Sc-45"],use:"Alloys, aerospace"},
+{number:22,symbol:"Ti",name:"Titanium",weight:47.867,category:"TransitionMetal",phase:"Solid",density:4.506,melting:1941,boiling:3560,electronegativity:1.54,electron:"[Ar]3d2 4s2",shells:[2,8,10,2],isotopes:["Ti-46","Ti-47","Ti-48","Ti-49","Ti-50"],use:"Alloys, implants"},
+{number:23,symbol:"V",name:"Vanadium",weight:50.942,category:"TransitionMetal",phase:"Solid",density:6.11,melting:2183,boiling:3680,electronegativity:1.63,electron:"[Ar]3d3 4s2",shells:[2,8,11,2],isotopes:["V-50","V-51"],use:"Steel alloys, catalysts"},
+{number:24,symbol:"Cr",name:"Chromium",weight:51.996,category:"TransitionMetal",phase:"Solid",density:7.19,melting:2180,boiling:2944,electronegativity:1.66,electron:"[Ar]3d5 4s1",shells:[2,8,13,1],isotopes:["Cr-50","Cr-52","Cr-53","Cr-54"],use:"Stainless steel, plating"},
+{number:25,symbol:"Mn",name:"Manganese",weight:54.938,category:"TransitionMetal",phase:"Solid",density:7.21,melting:1519,boiling:2334,electronegativity:1.55,electron:"[Ar]3d5 4s2",shells:[2,8,13,2],isotopes:["Mn-55"],use:"Steel, batteries"},
+{number:26,symbol:"Fe",name:"Iron",weight:55.845,category:"TransitionMetal",phase:"Solid",density:7.874,melting:1811,boiling:3134,electronegativity:1.83,electron:"[Ar]3d6 4s2",shells:[2,8,14,2],isotopes:["Fe-54","Fe-56","Fe-57","Fe-58"],use:"Construction, steel"},
+{number:27,symbol:"Co",name:"Cobalt",weight:58.933,category:"TransitionMetal",phase:"Solid",density:8.86,melting:1768,boiling:3200,electronegativity:1.88,electron:"[Ar]3d7 4s2",shells:[2,8,15,2],isotopes:["Co-59"],use:"Alloys, batteries"},
+{number:28,symbol:"Ni",name:"Nickel",weight:58.693,category:"TransitionMetal",phase:"Solid",density:8.908,melting:1728,boiling:3186,electronegativity:1.91,electron:"[Ar]3d8 4s2",shells:[2,8,16,2],isotopes:["Ni-58","Ni-60","Ni-61","Ni-62","Ni-64"],use:"Stainless steel, coins"},
+{number:29,symbol:"Cu",name:"Copper",weight:63.546,category:"TransitionMetal",phase:"Solid",density:8.96,melting:1357.77,boiling:2835,electronegativity:1.90,electron:"[Ar]3d10 4s1",shells:[2,8,18,1],isotopes:["Cu-63","Cu-65"],use:"Electrical wiring, coins"},
+{number:30,symbol:"Zn",name:"Zinc",weight:65.38,category:"TransitionMetal",phase:"Solid",density:7.134,melting:692.68,boiling:1180,electronegativity:1.65,electron:"[Ar]3d10 4s2",shells:[2,8,18,2],isotopes:["Zn-64","Zn-66","Zn-67","Zn-68","Zn-70"],use:"Galvanizing, alloys"},
+{number:31,symbol:"Ga",name:"Gallium",weight:69.723,category:"PostTransitionMetal",phase:"Solid",density:5.91,melting:302.91,boiling:2477,electronegativity:1.81,electron:"[Ar]3d10 4s2 4p1",shells:[2,8,18,3],isotopes:["Ga-69","Ga-71"],use:"Electronics, LEDs"},
+{number:32,symbol:"Ge",name:"Germanium",weight:72.63,category:"Metalloid",phase:"Solid",density:5.323,melting:1211.4,boiling:3106,electronegativity:2.01,electron:"[Ar]3d10 4s2 4p2",shells:[2,8,18,4],isotopes:["Ge-70","Ge-72","Ge-73","Ge-74","Ge-76"],use:"Semiconductors, fiber optics"},
+{number:33,symbol:"As",name:"Arsenic",weight:74.922,category:"Metalloid",phase:"Solid",density:5.727,melting:1090,boiling:887,electronegativity:2.18,electron:"[Ar]3d10 4s2 4p3",shells:[2,8,18,5],isotopes:["As-75"],use:"Alloys, pesticides"},
+{number:34,symbol:"Se",name:"Selenium",weight:78.971,category:"Nonmetal",phase:"Solid",density:4.81,melting:494,boiling:958,electronegativity:2.55,electron:"[Ar]3d10 4s2 4p4",shells:[2,8,18,6],isotopes:["Se-74","Se-76","Se-77","Se-78","Se-80","Se-82"],use:"Glass, electronics"},
+{number:35,symbol:"Br",name:"Bromine",weight:79.904,category:"Halogen",phase:"Liquid",density:3.12,melting:265.8,boiling:332,electronegativity:2.96,electron:"[Ar]3d10 4s2 4p5",shells:[2,8,18,7],isotopes:["Br-79","Br-81"],use:"Flame retardants, disinfectants"},
+{number:36,symbol:"Kr",name:"Krypton",weight:83.798,category:"NobleGas",phase:"Gas",density:0.00373,melting:115.79,boiling:119.93,electronegativity:null,electron:"[Ar]3d10 4s2 4p6",shells:[2,8,18,8],isotopes:["Kr-78","Kr-80","Kr-82","Kr-83","Kr-84","Kr-86"],use:"Lighting, photography"},
+{number:37,symbol:"Rb",name:"Rubidium",weight:85.468,category:"AlkaliMetal",phase:"Solid",density:1.532,melting:312.46,boiling:961,electronegativity:0.82,electron:"[Kr]5s1",shells:[2,8,18,8,1],isotopes:["Rb-85","Rb-87"],use:"Research, atomic clocks"},
+{number:38,symbol:"Sr",name:"Strontium",weight:87.62,category:"AlkalineEarthMetal",phase:"Solid",density:2.64,melting:1050,boiling:1650,electronegativity:0.95,electron:"[Kr]5s2",shells:[2,8,18,8,2],isotopes:["Sr-84","Sr-86","Sr-87","Sr-88"],use:"Fireworks, magnets"},
+{number:39,symbol:"Y",name:"Yttrium",weight:88.906,category:"TransitionMetal",phase:"Solid",density:4.472,melting:1799,boiling:3609,electronegativity:1.22,electron:"[Kr]4d1 5s2",shells:[2,8,18,9,2],isotopes:["Y-89"],use:"LEDs, superconductors"},
+{number:40,symbol:"Zr",name:"Zirconium",weight:91.224,category:"TransitionMetal",phase:"Solid",density:6.52,melting:2128,boiling:4682,electronegativity:1.33,electron:"[Kr]4d2 5s2",shells:[2,8,18,10,2],isotopes:["Zr-90","Zr-91","Zr-92","Zr-94","Zr-96"],use:"Nuclear reactors, ceramics"},
+{number:41,symbol:"Nb",name:"Niobium",weight:92.906,category:"TransitionMetal",phase:"Solid",density:8.57,melting:2750,boiling:5017,electronegativity:1.6,electron:"[Kr]4d4 5s1",shells:[2,8,18,12,1],isotopes:["Nb-93"],use:"Superalloys, electronics"},
+{number:42,symbol:"Mo",name:"Molybdenum",weight:95.95,category:"TransitionMetal",phase:"Solid",density:10.28,melting:2896,boiling:4912,electronegativity:2.16,electron:"[Kr]4d5 5s1",shells:[2,8,18,13,1],isotopes:["Mo-92","Mo-94","Mo-95","Mo-96","Mo-97","Mo-98","Mo-100"],use:"Alloys, catalysts"},
+{number:43,symbol:"Tc",name:"Technetium",weight:98,category:"TransitionMetal",phase:"Solid",density:11,melting:2430,boiling:4538,electronegativity:1.9,electron:"[Kr]4d5 5s2",shells:[2,8,18,13,2],isotopes:["Tc-98","Tc-99m"],use:"Medical imaging"},
+{number:44,symbol:"Ru",name:"Ruthenium",weight:101.07,category:"TransitionMetal",phase:"Solid",density:12.37,melting:2607,boiling:4423,electronegativity:2.2,electron:"[Kr]4d7 5s1",shells:[2,8,18,15,1],isotopes:["Ru-96","Ru-98","Ru-99","Ru-100","Ru-101","Ru-102","Ru-104"],use:"Electronics, catalysts"},
+{number:45,symbol:"Rh",name:"Rhodium",weight:102.91,category:"TransitionMetal",phase:"Solid",density:12.41,melting:2237,boiling:3968,electronegativity:2.28,electron:"[Kr]4d8 5s1",shells:[2,8,18,16,1],isotopes:["Rh-103"],use:"Catalytic converters, jewelry"},
+{number:46,symbol:"Pd",name:"Palladium",weight:106.42,category:"TransitionMetal",phase:"Solid",density:12.02,melting:1828.05,boiling:3236,electronegativity:2.20,electron:"[Kr]4d10",shells:[2,8,18,18,0],isotopes:["Pd-102","Pd-104","Pd-105","Pd-106","Pd-108","Pd-110"],use:"Catalysis, electronics"},
+{number:47,symbol:"Ag",name:"Silver",weight:107.87,category:"TransitionMetal",phase:"Solid",density:10.49,melting:1234.93,boiling:2435,electronegativity:1.93,electron:"[Kr]4d10 5s1",shells:[2,8,18,18,1],isotopes:["Ag-107","Ag-109"],use:"Jewelry, electronics"},
+{number:48,symbol:"Cd",name:"Cadmium",weight:112.41,category:"TransitionMetal",phase:"Solid",density:8.65,melting:594.22,boiling:1040,electronegativity:1.69,electron:"[Kr]4d10 5s2",shells:[2,8,18,18,2],isotopes:["Cd-106","Cd-108","Cd-110","Cd-111","Cd-112","Cd-113","Cd-114","Cd-116"],use:"Batteries, coatings"},
+{number:49,symbol:"In",name:"Indium",weight:114.82,category:"PostTransitionMetal",phase:"Solid",density:7.31,melting:429.75,boiling:2345,electronegativity:1.78,electron:"[Kr]4d10 5s2 5p1",shells:[2,8,18,18,3],isotopes:["In-113","In-115"],use:"Electronics, alloys"},
+{number:50,symbol:"Sn",name:"Tin",weight:118.71,category:"PostTransitionMetal",phase:"Solid",density:7.31,melting:505.08,boiling:2875,electronegativity:1.96,electron:"[Kr]4d10 5s2 5p2",shells:[2,8,18,18,4],isotopes:["Sn-112","Sn-114","Sn-115","Sn-116","Sn-117","Sn-118","Sn-119","Sn-120","Sn-122","Sn-124"],use:"Solder, plating"},
+{number:51,symbol:"Sb",name:"Antimony",weight:121.76,category:"Metalloid",phase:"Solid",density:6.697,melting:903.78,boiling:1860,electronegativity:2.05,electron:"[Kr]4d10 5s2 5p3",shells:[2,8,18,18,5],isotopes:["Sb-121","Sb-123"],use:"Alloys, flame retardants"},
+{number:52,symbol:"Te",name:"Tellurium",weight:127.6,category:"Metalloid",phase:"Solid",density:6.24,melting:722.66,boiling:1261,electronegativity:2.1,electron:"[Kr]4d10 5s2 5p4",shells:[2,8,18,18,6],isotopes:["Te-120","Te-122","Te-123","Te-124","Te-125","Te-126","Te-128","Te-130"],use:"Alloys, semiconductors"},
+{number:53,symbol:"I",name:"Iodine",weight:126.90,category:"Halogen",phase:"Solid",density:4.933,melting:386.85,boiling:457,electronegativity:2.66,electron:"[Kr]4d10 5s2 5p5",shells:[2,8,18,18,7],isotopes:["I-127"],use:"Disinfectants, pharmaceuticals"},
+{number:54,symbol:"Xe",name:"Xenon",weight:131.29,category:"NobleGas",phase:"Gas",density:0.005894,melting:161.4,boiling:165.03,electronegativity:null,electron:"[Kr]4d10 5s2 5p6",shells:[2,8,18,18,8],isotopes:["Xe-124","Xe-126","Xe-128","Xe-129","Xe-130","Xe-131","Xe-132","Xe-134","Xe-136"],use:"Lighting, anesthesia"},
+{number:55,symbol:"Cs",name:"Cesium",weight:132.91,category:"AlkaliMetal",phase:"Solid",density:1.873,melting:301.59,boiling:944,electronegativity:0.79,electron:"[Xe]6s1",shells:[2,8,18,18,8,1],isotopes:["Cs-133"],use:"Atomic clocks, drilling fluids"},
+{number:56,symbol:"Ba",name:"Barium",weight:137.33,category:"AlkalineEarthMetal",phase:"Solid",density:3.62,melting:1000,boiling:2170,electronegativity:0.89,electron:"[Xe]6s2",shells:[2,8,18,18,8,2],isotopes:["Ba-130","Ba-132","Ba-134","Ba-135","Ba-136","Ba-137","Ba-138"],use:"Fireworks, X-ray contrast agents"},
+{number:57,symbol:"La",name:"Lanthanum",weight:138.91,category:"Lanthanide",phase:"Solid",density:6.145,melting:1193,boiling:3737,electronegativity:1.1,electron:"[Xe]5d1 6s2",shells:[2,8,18,18,9,2],isotopes:["La-138","La-139"],use:"Catalysts, optics"},
+{number:58,symbol:"Ce",name:"Cerium",weight:140.12,category:"Lanthanide",phase:"Solid",density:6.77,melting:1071,boiling:3716,electronegativity:1.12,electron:"[Xe]4f1 5d1 6s2",shells:[2,8,18,19,9,2],isotopes:["Ce-136","Ce-138","Ce-140","Ce-142"],use:"Catalysts, glass polishing"},
+{number:59,symbol:"Pr",name:"Praseodymium",weight:140.91,category:"Lanthanide",phase:"Solid",density:6.77,melting:1208,boiling:3793,electronegativity:1.13,electron:"[Xe]4f3 6s2",shells:[2,8,18,21,8,2],isotopes:["Pr-141"],use:"Magnets, glass coloring"},
+{number:60,symbol:"Nd",name:"Neodymium",weight:144.24,category:"Lanthanide",phase:"Solid",density:7.01,melting:1297,boiling:3347,electronegativity:1.14,electron:"[Xe]4f4 6s2",shells:[2,8,18,22,8,2],isotopes:["Nd-142","Nd-143","Nd-144","Nd-145","Nd-146","Nd-148","Nd-150"],use:"Magnets, lasers"},
+{number:61,symbol:"Pm",name:"Promethium",weight:145,category:"Lanthanide",phase:"Solid",density:7.26,melting:1100,boiling:3000,electronegativity:1.13,electron:"[Xe]4f5 6s2",shells:[2,8,18,23,8,2],isotopes:["Pm-145","Pm-147"],use:"Nuclear batteries, luminous paint"},
+{number:62,symbol:"Sm",name:"Samarium",weight:150.36,category:"Lanthanide",phase:"Solid",density:7.52,melting:1345,boiling:2076,electronegativity:1.17,electron:"[Xe]4f6 6s2",shells:[2,8,18,24,8,2],isotopes:["Sm-144","Sm-147","Sm-148","Sm-149","Sm-150","Sm-152","Sm-154"],use:"Magnets, cancer treatment"},
+{number:63,symbol:"Eu",name:"Europium",weight:151.96,category:"Lanthanide",phase:"Solid",density:5.24,melting:1099,boiling:1802,electronegativity:1.2,electron:"[Xe]4f7 6s2",shells:[2,8,18,25,8,2],isotopes:["Eu-151","Eu-153"],use:"Red phosphors, lasers"},
+{number:64,symbol:"Gd",name:"Gadolinium",weight:157.25,category:"Lanthanide",phase:"Solid",density:7.9,melting:1585,boiling:3546,electronegativity:1.2,electron:"[Xe]4f7 5d1 6s2",shells:[2,8,18,25,9,2],isotopes:["Gd-152","Gd-154","Gd-155","Gd-156","Gd-157","Gd-158","Gd-160"],use:"MRI contrast agents, magnets"},
+{number:65,symbol:"Tb",name:"Terbium",weight:158.93,category:"Lanthanide",phase:"Solid",density:8.23,melting:1629,boiling:3503,electronegativity:1.2,electron:"[Xe]4f9 6s2",shells:[2,8,18,27,8,2],isotopes:["Tb-159"],use:"Green phosphors, magnets"},
+{number:66,symbol:"Dy",name:"Dysprosium",weight:162.5,category:"Lanthanide",phase:"Solid",density:8.55,melting:1680,boiling:2840,electronegativity:1.22,electron:"[Xe]4f10 6s2",shells:[2,8,18,28,8,2],isotopes:["Dy-156","Dy-158","Dy-160","Dy-161","Dy-162","Dy-163","Dy-164"],use:"Magnets, nuclear reactors"},
+{number:67,symbol:"Ho",name:"Holmium",weight:164.93,category:"Lanthanide",phase:"Solid",density:8.79,melting:1734,boiling:2993,electronegativity:1.23,electron:"[Xe]4f11 6s2",shells:[2,8,18,29,8,2],isotopes:["Ho-165"],use:"Magnets, lasers"},
+{number:68,symbol:"Er",name:"Erbium",weight:167.26,category:"Lanthanide",phase:"Solid",density:9.07,melting:1802,boiling:3141,electronegativity:1.24,electron:"[Xe]4f12 6s2",shells:[2,8,18,30,8,2],isotopes:["Er-162","Er-164","Er-166","Er-167","Er-168","Er-170"],use:"Lasers, fiber optics"},
+{number:69,symbol:"Tm",name:"Thulium",weight:168.93,category:"Lanthanide",phase:"Solid",density:9.32,melting:1818,boiling:2223,electronegativity:1.25,electron:"[Xe]4f13 6s2",shells:[2,8,18,31,8,2],isotopes:["Tm-169"],use:"Lasers, X-ray devices"},
+{number:70,symbol:"Yb",name:"Ytterbium",weight:173.05,category:"Lanthanide",phase:"Solid",density:6.9,melting:1097,boiling:1469,electronegativity:1.1,electron:"[Xe]4f14 6s2",shells:[2,8,18,32,8,2],isotopes:["Yb-168","Yb-170","Yb-171","Yb-172","Yb-173","Yb-174","Yb-176"],use:"Lasers, atomic clocks"},
+{number:71,symbol:"Lu",name:"Lutetium",weight:174.97,category:"Lanthanide",phase:"Solid",density:9.84,melting:1936,boiling:3675,electronegativity:1.27,electron:"[Xe]4f14 5d1 6s2",shells:[2,8,18,32,9,2],isotopes:["Lu-175","Lu-176"],use:"Catalysts, PET scan detectors"},
+{number:72,symbol:"Hf",name:"Hafnium",weight:178.49,category:"TransitionMetal",phase:"Solid",density:13.31,melting:2506,boiling:4876,electronegativity:1.3,electron:"[Xe]4f14 5d2 6s2",shells:[2,8,18,32,10,2],isotopes:["Hf-174","Hf-176","Hf-177","Hf-178","Hf-179","Hf-180"],use:"Nuclear reactors, alloys"},
+{number:73,symbol:"Ta",name:"Tantalum",weight:180.95,category:"TransitionMetal",phase:"Solid",density:16.69,melting:3290,boiling:5731,electronegativity:1.5,electron:"[Xe]4f14 5d3 6s2",shells:[2,8,18,32,11,2],isotopes:["Ta-180","Ta-181"],use:"Electronics, surgical implants"},
+{number:74,symbol:"W",name:"Tungsten",weight:183.84,category:"TransitionMetal",phase:"Solid",density:19.25,melting:3695,boiling:5828,electronegativity:2.36,electron:"[Xe]4f14 5d4 6s2",shells:[2,8,18,32,12,2],isotopes:["W-180","W-182","W-183","W-184","W-186"],use:"Filaments, alloys"},
+{number:75,symbol:"Re",name:"Rhenium",weight:186.21,category:"TransitionMetal",phase:"Solid",density:21.02,melting:3459,boiling:5869,electronegativity:1.9,electron:"[Xe]4f14 5d5 6s2",shells:[2,8,18,32,13,2],isotopes:["Re-185","Re-187"],use:"Superalloys, catalysts"},
+{number:76,symbol:"Os",name:"Osmium",weight:190.23,category:"TransitionMetal",phase:"Solid",density:22.59,melting:3306,boiling:5285,electronegativity:2.2,electron:"[Xe]4f14 5d6 6s2",shells:[2,8,18,32,14,2],isotopes:["Os-184","Os-186","Os-187","Os-188","Os-189","Os-190","Os-192"],use:"Alloys, fountain pen tips"},
+{number:77,symbol:"Ir",name:"Iridium",weight:192.22,category:"TransitionMetal",phase:"Solid",density:22.56,melting:2719,boiling:4701,electronegativity:2.2,electron:"[Xe]4f14 5d7 6s2",shells:[2,8,18,32,15,2],isotopes:["Ir-191","Ir-193"],use:"Spark plugs, electronics"},
+{number:78,symbol:"Pt",name:"Platinum",weight:195.08,category:"TransitionMetal",phase:"Solid",density:21.45,melting:2041.4,boiling:4098,electronegativity:2.28,electron:"[Xe]4f14 5d9 6s1",shells:[2,8,18,32,17,1],isotopes:["Pt-190","Pt-192","Pt-194","Pt-195","Pt-196","Pt-198"],use:"Catalysts, jewelry"},
+{number:79,symbol:"Au",name:"Gold",weight:196.97,category:"TransitionMetal",phase:"Solid",density:19.32,melting:1337.33,boiling:3129,electronegativity:2.54,electron:"[Xe]4f14 5d10 6s1",shells:[2,8,18,32,18,1],isotopes:["Au-197"],use:"Jewelry, electronics, currency"},
+{number:80,symbol:"Hg",name:"Mercury",weight:200.59,category:"TransitionMetal",phase:"Liquid",density:13.53,melting:234.32,boiling:629.88,electronegativity:2.00,electron:"[Xe]4f14 5d10 6s2",shells:[2,8,18,32,18,2],isotopes:["Hg-196","Hg-198","Hg-199","Hg-200","Hg-201","Hg-202","Hg-204"],use:"Thermometers, batteries"},
+{number:81,symbol:"Tl",name:"Thallium",weight:204.38,category:"PostTransitionMetal",phase:"Solid",density:11.85,melting:577,boiling:1746,electronegativity:1.62,electron:"[Xe]4f14 5d10 6s2 6p1",shells:[2,8,18,32,18,3],isotopes:["Tl-203","Tl-205"],use:"Electronics, optics"},
+{number:82,symbol:"Pb",name:"Lead",weight:207.2,category:"PostTransitionMetal",phase:"Solid",density:11.34,melting:600.61,boiling:2022,electronegativity:2.33,electron:"[Xe]4f14 5d10 6s2 6p2",shells:[2,8,18,32,18,4],isotopes:["Pb-204","Pb-206","Pb-207","Pb-208"],use:"Batteries, radiation shielding"},
+{number:83,symbol:"Bi",name:"Bismuth",weight:208.98,category:"PostTransitionMetal",phase:"Solid",density:9.78,melting:544.7,boiling:1837,electronegativity:2.02,electron:"[Xe]4f14 5d10 6s2 6p3",shells:[2,8,18,32,18,5],isotopes:["Bi-209"],use:"Cosmetics, alloys"},
+{number:84,symbol:"Po",name:"Polonium",weight:209,category:"Metalloid",phase:"Solid",density:9.2,melting:527,boiling:1235,electronegativity:2.0,electron:"[Xe]4f14 5d10 6s2 6p4",shells:[2,8,18,32,18,6],isotopes:["Po-210"],use:"Nuclear applications"},
+{number:85,symbol:"At",name:"Astatine",weight:210,category:"Halogen",phase:"Solid",density:7,melting:575,boiling:610,electronegativity:2.2,electron:"[Xe]4f14 5d10 6s2 6p5",shells:[2,8,18,32,18,7],isotopes:["At-210","At-211"],use:"Medical research"},
+{number:86,symbol:"Rn",name:"Radon",weight:222,category:"NobleGas",phase:"Gas",density:0.00973,melting:202,boiling:211.3,electronegativity:null,electron:"[Xe]4f14 5d10 6s2 6p6",shells:[2,8,18,32,18,8],isotopes:["Rn-222"],use:"Radiotherapy, research"},
+{number:87,symbol:"Fr",name:"Francium",weight:223,category:"AlkaliMetal",phase:"Solid",density:1.87,melting:300,boiling:950,electronegativity:0.7,electron:"[Rn]7s1",shells:[2,8,18,32,18,8,1],isotopes:["Fr-223"],use:"Research"},
+{number:88,symbol:"Ra",name:"Radium",weight:226,category:"AlkalineEarthMetal",phase:"Solid",density:5.5,melting:973,boiling:1413,electronegativity:0.9,electron:"[Rn]7s2",shells:[2,8,18,32,18,8,2],isotopes:["Ra-226","Ra-228"],use:"Medical, luminous paints"},
+{number:89,symbol:"Ac",name:"Actinium",weight:227,category:"Actinide",phase:"Solid",density:10.07,melting:1323,boiling:3471,electronegativity:1.1,electron:"[Rn]6d1 7s2",shells:[2,8,18,32,18,9,2],isotopes:["Ac-227"],use:"Research, neutron source"},
+{number:90,symbol:"Th",name:"Thorium",weight:232.04,category:"Actinide",phase:"Solid",density:11.72,melting:2023,boiling:5061,electronegativity:1.3,electron:"[Rn]6d2 7s2",shells:[2,8,18,32,18,10,2],isotopes:["Th-232"],use:"Nuclear fuel, ceramics"},
+{number:91,symbol:"Pa",name:"Protactinium",weight:231.04,category:"Actinide",phase:"Solid",density:15.37,melting:1841,boiling:4273,electronegativity:1.5,electron:"[Rn]5f2 6d1 7s2",shells:[2,8,18,32,20,9,2],isotopes:["Pa-231"],use:"Research"},
+{number:92,symbol:"U",name:"Uranium",weight:238.03,category:"Actinide",phase:"Solid",density:18.95,melting:1405.3,boiling:4404,electronegativity:1.38,electron:"[Rn]5f3 6d1 7s2",shells:[2,8,18,32,21,9,2],isotopes:["U-234","U-235","U-238"],use:"Nuclear fuel, weapons"},
+{number:93,symbol:"Np",name:"Neptunium",weight:237,category:"Actinide",phase:"Solid",density:20.45,melting:917,boiling:4273,electronegativity:1.36,electron:"[Rn]5f4 6d1 7s2",shells:[2,8,18,32,22,9,2],isotopes:["Np-237"],use:"Research, nuclear reactors"},
+{number:94,symbol:"Pu",name:"Plutonium",weight:244,category:"Actinide",phase:"Solid",density:19.84,melting:913.5,boiling:3505,electronegativity:1.28,electron:"[Rn]5f6 7s2",shells:[2,8,18,32,24,8,2],isotopes:["Pu-239","Pu-240","Pu-241"],use:"Nuclear fuel, weapons"},
+{number:95,symbol:"Am",name:"Americium",weight:243,category:"Actinide",phase:"Solid",density:13.69,melting:1449,boiling:2880,electronegativity:1.3,electron:"[Rn]5f7 7s2",shells:[2,8,18,32,25,8,2],isotopes:["Am-241","Am-243"],use:"Smoke detectors, research"},
+{number:96,symbol:"Cm",name:"Curium",weight:247,category:"Actinide",phase:"Solid",density:13.51,melting:1340,boiling:3110,electronegativity:1.3,electron:"[Rn]5f7 6d1 7s2",shells:[2,8,18,32,25,9,2],isotopes:["Cm-244","Cm-245","Cm-246","Cm-248"],use:"Research"},
+{number:97,symbol:"Bk",name:"Berkelium",weight:247,category:"Actinide",phase:"Solid",density:14.78,melting:1259,boiling:2900,electronegativity:1.3,electron:"[Rn]5f9 7s2",shells:[2,8,18,32,27,8,2],isotopes:["Bk-247"],use:"Research"},
+{number:98,symbol:"Cf",name:"Californium",weight:251,category:"Actinide",phase:"Solid",density:15.1,melting:1173,boiling:1743,electronegativity:1.3,electron:"[Rn]5f10 7s2",shells:[2,8,18,32,28,8,2],isotopes:["Cf-249","Cf-252"],use:"Neutron sources, research"},
+{number:99,symbol:"Es",name:"Einsteinium",weight:252,category:"Actinide",phase:"Solid",density:8.84,melting:1133,boiling:1269,electronegativity:1.3,electron:"[Rn]5f11 7s2",shells:[2,8,18,32,29,8,2],isotopes:["Es-252"],use:"Research"},
+{number:100,symbol:"Fm",name:"Fermium",weight:257,category:"Actinide",phase:"Solid",density:9.7,melting:1800,boiling:null,electronegativity:1.3,electron:"[Rn]5f12 7s2",shells:[2,8,18,32,30,8,2],isotopes:["Fm-257"],use:"Research"},
+{number:101,symbol:"Md",name:"Mendelevium",weight:258,category:"Actinide",phase:"Solid",density:10.3,melting:1100,boiling:null,electronegativity:1.3,electron:"[Rn]5f13 7s2",shells:[2,8,18,32,31,8,2],isotopes:["Md-258"],use:"Research"},
+{number:102,symbol:"No",name:"Nobelium",weight:259,category:"Actinide",phase:"Solid",density:9.9,melting:1100,boiling:null,electronegativity:1.3,electron:"[Rn]5f14 7s2",shells:[2,8,18,32,32,8,2],isotopes:["No-259"],use:"Research"},
+{number:103,symbol:"Lr",name:"Lawrencium",weight:266,category:"Actinide",phase:"Solid",density:15.6,melting:1900,boiling:null,electronegativity:1.3,electron:"[Rn]5f14 7s2 7p1",shells:[2,8,18,32,32,8,3],isotopes:["Lr-266"],use:"Research"},
+{number:104,symbol:"Rf",name:"Rutherfordium",weight:267,category:"TransitionMetal",phase:"Solid",density:23.2,melting:null,boiling:null,electronegativity:null,electron:"[Rn]5f14 6d2 7s2",shells:[2,8,18,32,32,10,2],isotopes:["Rf-267"],use:"Research"},
+{number:105,symbol:"Db",name:"Dubnium",weight:270,category:"TransitionMetal",phase:"Solid",density:29.3,melting:null,boiling:null,electronegativity:null,electron:"[Rn]5f14 6d3 7s2",shells:[2,8,18,32,32,11,2],isotopes:["Db-270"],use:"Research"},
+{number:106,symbol:"Sg",name:"Seaborgium",weight:271,category:"TransitionMetal",phase:"Solid",density:35,melting:null,boiling:null,electronegativity:null,electron:"[Rn]5f14 6d4 7s2",shells:[2,8,18,32,32,12,2],isotopes:["Sg-271"],use:"Research"},
+{number:107,symbol:"Bh",name:"Bohrium",weight:270,category:"TransitionMetal",phase:"Solid",density:37.1,melting:null,boiling:null,electronegativity:null,electron:"[Rn]5f14 6d5 7s2",shells:[2,8,18,32,32,13,2],isotopes:["Bh-270"],use:"Research"},
+{number:108,symbol:"Hs",name:"Hassium",weight:277,category:"TransitionMetal",phase:"Solid",density:40.7,melting:null,boiling:null,electronegativity:null,electron:"[Rn]5f14 6d6 7s2",shells:[2,8,18,32,32,14,2],isotopes:["Hs-277"],use:"Research"},
+{number:109,symbol:"Mt",name:"Meitnerium",weight:276,category:"TransitionMetal",phase:"Solid",density:37.4,melting:null,boiling:null,electronegativity:null,electron:"[Rn]5f14 6d7 7s2",shells:[2,8,18,32,32,15,2],isotopes:["Mt-276"],use:"Research"},
+{number:110,symbol:"Ds",name:"Darmstadtium",weight:281,category:"TransitionMetal",phase:"Solid",density:34.8,melting:null,boiling:null,electronegativity:null,electron:"[Rn]5f14 6d8 7s2",shells:[2,8,18,32,32,16,2],isotopes:["Ds-281"],use:"Research"},
+{number:111,symbol:"Rg",name:"Roentgenium",weight:282,category:"TransitionMetal",phase:"Solid",density:28.7,melting:null,boiling:null,electronegativity:null,electron:"[Rn]5f14 6d9 7s2",shells:[2,8,18,32,32,17,2],isotopes:["Rg-282"],use:"Research"},
+{number:112,symbol:"Cn",name:"Copernicium",weight:285,category:"TransitionMetal",phase:"Liquid",density:14,melting:null,boiling:null,electronegativity:null,electron:"[Rn]5f14 6d10 7s2",shells:[2,8,18,32,32,18,2],isotopes:["Cn-285"],use:"Research"},
+{number:113,symbol:"Nh",name:"Nihonium",weight:286,category:"PostTransitionMetal",phase:"Solid",density:16,melting:null,boiling:null,electronegativity:null,electron:"[Rn]5f14 6d10 7s2 7p1",shells:[2,8,18,32,32,18,3],isotopes:["Nh-286"],use:"Research"},
+{number:114,symbol:"Fl",name:"Flerovium",weight:289,category:"PostTransitionMetal",phase:"Solid",density:14,melting:null,boiling:null,electronegativity:null,electron:"[Rn]5f14 6d10 7s2 7p2",shells:[2,8,18,32,32,18,4],isotopes:["Fl-289"],use:"Research"},
+{number:115,symbol:"Mc",name:"Moscovium",weight:288,category:"PostTransitionMetal",phase:"Solid",density:13.5,melting:null,boiling:null,electronegativity:null,electron:"[Rn]5f14 6d10 7s2 7p3",shells:[2,8,18,32,32,18,5],isotopes:["Mc-288"],use:"Research"},
+{number:116,symbol:"Lv",name:"Livermorium",weight:293,category:"PostTransitionMetal",phase:"Solid",density:12.9,melting:null,boiling:null,electronegativity:null,electron:"[Rn]5f14 6d10 7s2 7p4",shells:[2,8,18,32,32,18,6],isotopes:["Lv-293"],use:"Research"},
+{number:117,symbol:"Ts",name:"Tennessine",weight:294,category:"Halogen",phase:"Solid",density:7.2,melting:null,boiling:null,electronegativity:null,electron:"[Rn]5f14 6d10 7s2 7p5",shells:[2,8,18,32,32,18,7],isotopes:["Ts-294"],use:"Research"},
+{number:118,symbol:"Og",name:"Oganesson",weight:294,category:"NobleGas",phase:"Solid",density:6.9,melting:null,boiling:null,electronegativity:null,electron:"[Rn]5f14 6d10 7s2 7p6",shells:[2,8,18,32,32,18,8],isotopes:["Og-294"],use:"Research"}
+]
+// ---------- DISPLAY ELEMENTS ----------
+const table = document.getElementById("table");
+
+function displayElements(list) {
+    table.innerHTML = "";
+    list.forEach(el => {
+        const div = document.createElement("div");
+        div.className = `element ${el.category}`;
+        div.innerHTML = `<div class="number">${el.number}</div><div class="symbol">${el.symbol}</div>`;
+        div.addEventListener("click", () => openModal(el));
+        table.appendChild(div);
+    });
+}
+
+displayElements(elements);
+
+// ---------- MODAL ----------
+const modal = document.getElementById("modal");
+const overlay = document.getElementById("overlay");
+const closeBtn = document.getElementById("closeBtn");
+const calcBtn = document.getElementById("calcBtn");
+const gramsInput = document.getElementById("grams");
+const molesInput = document.getElementById("moles");
+const atomsInput = document.getElementById("atoms");
+let currentElement = null;
+
+function openModal(el) {
+    currentElement = el;
+    modal.style.display = "block";
+    overlay.style.display = "block";
+    document.getElementById("modal-name").textContent = el.name;
+    document.getElementById("modal-symbol").textContent = `Symbol: ${el.symbol}`;
+    document.getElementById("modal-atomic").textContent = `Atomic Number: ${el.number}`;
+    document.getElementById("modal-details").textContent = `Category: ${el.category}, Phase: ${el.phase}, Density: ${el.density} g/cm³, Uses: ${el.use}`;
+    gramsInput.value = molesInput.value = atomsInput.value = "";
+}
+
+function closeModal() {
+    modal.style.display = "none";
+    overlay.style.display = "none";
+}
+
+closeBtn.addEventListener("click", closeModal);
+overlay.addEventListener("click", closeModal);
+
+// ---------- MOLE CALCULATOR ----------
+calcBtn.addEventListener("click", () => {
+    const grams = parseFloat(gramsInput.value);
+    const moles = parseFloat(molesInput.value);
+    const atoms = parseFloat(atomsInput.value);
+    const avogadro = 6.022e23;
+
+    if(!currentElement) return;
+
+    if(grams && !moles && !atoms){
+        const m = grams / currentElement.weight;
+        molesInput.value = m.toFixed(6);
+        atomsInput.value = (m * avogadro).toExponential(3);
+    } else if(!grams && moles && !atoms){
+        gramsInput.value = (moles * currentElement.weight).toFixed(3);
+        atomsInput.value = (moles * avogadro).toExponential(3);
+    } else if(!grams && !moles && atoms){
+        const m = atoms / avogadro;
+        molesInput.value = m.toExponential(6);
+        gramsInput.value = (m * currentElement.weight).toFixed(3);
+    } else {
+        alert("Fill only one field to calculate.");
+    }
+});
+
+// ---------- SEARCH ----------
+const search = document.getElementById("search");
+search.addEventListener("input", () => {
+    const term = search.value.toLowerCase();
+    const filtered = elements.filter(el => 
+        el.name.toLowerCase().includes(term) ||
+        el.symbol.toLowerCase().includes(term) ||
+        el.number.toString() === term
+    );
+    displayElements(filtered);
+});
+</script>
+</body>
+</html>
+
+
+
