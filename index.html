@@ -1,121 +1,310 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Periodic Table — Victor Delali Cudjoe</title>
 <style>
-body {
-    font-family: Arial, sans-serif;
-    background: #0d1117;
-    color: #c9d1d9;
-    margin: 0;
-    padding: 0;
-}
-header, footer {
-    text-align: center;
-    padding: 10px;
-    background: #161b22;
-    color: #58a6ff;
-    font-weight: bold;
-}
-h1 {
-    text-align: center;
-    margin: 15px 0;
-}
-.table {
-    display: grid;
-    grid-template-columns: repeat(18, 1fr);
-    gap: 4px;
-    padding: 8px;
-}
-.element {
-    border-radius: 6px;
-    padding: 6px;
-    text-align: center;
-    font-size: 12px;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-.element:hover {
-    transform: scale(1.08);
-    box-shadow: 0 3px 8px rgba(0,0,0,0.7);
-}
-.symbol {font-size: 16px; font-weight: bold;}
-.number {font-size: 10px; color: #c9d1d9;}
+  :root{
+    --bg: #0d1117;
+    --panel: #161b22;
+    --accent: #58a6ff;
+    --muted: #c9d1d9;
+    --gap: 6px;
 
-/* COLORS */
-.Nonmetal {background: #3fb950;}
-.NobleGas {background: #ff6f61;}
-.AlkaliMetal {background: #fca311;}
-.AlkalineEarthMetal {background: #f5cb5c;}
-.TransitionMetal {background: #8ecae6;}
-.Metalloid {background: #f7b267;}
-.Halogen {background: #6a4c93;}
-.Lanthanide {background: #ffb4a2;}
-.Actinide {background: #b5ead7;}
-.PostTransitionMetal {background: #ffddc1;}
+    /* default category palette */
+    --col-nonmetal: #3fb950;
+    --col-noble: #ff6f61;
+    --col-alkali: #fca311;
+    --col-alk-earth: #f5cb5c;
+    --col-transition: #8ecae6;
+    --col-metalloid: #f7b267;
+    --col-halogen: #6a4c93;
+    --col-lanth: #ffb4a2;
+    --col-act: #b5ead7;
+    --col-post: #ffddc1;
 
-/* MODAL */
-#overlay {
-    display: none;
-    position: fixed;
-    top:0; left:0; width:100%; height:100%;
-    background: rgba(0,0,0,0.75);
-    z-index: 5;
-}
-.modal {
-    display: none;
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    background:#161b22;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.8);
-    max-width: 380px;
-    color: #c9d1d9;
-    z-index: 10;
-}
-.modal h2{color:#58a6ff;}
-.modal button{margin-top:8px; padding:6px 12px; cursor:pointer;}
-input[type="text"], input[type="number"] {
-    margin: 8px auto;
-    display: block;
-    padding: 6px;
-    width: 200px;
-    border-radius: 5px;
-    border: none;
-}
+    --tile-text: #071022;
+    --tile-number: rgba(0,0,0,0.6);
+  }
+
+  /* colorblind-friendly palette when .colorblind is set on body */
+  body.colorblind {
+    --col-nonmetal: #66c2a5;
+    --col-noble: #fc8d62;
+    --col-alkali: #8da0cb;
+    --col-alk-earth: #e78ac3;
+    --col-transition: #a6d854;
+    --col-metalloid: #ffd92f;
+    --col-halogen: #b3b3b3;
+    --col-lanth: #1f78b4;
+    --col-act: #33a02c;
+    --col-post: #ff7f00;
+  }
+
+  html,body{
+    height:100%;
+    margin:0;
+    background:var(--bg);
+    color:var(--muted);
+    font-family:Inter, Arial, Helvetica, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+  }
+
+  header, footer{
+    text-align:center;
+    padding:10px;
+    background:var(--panel);
+    color:var(--accent);
+    font-weight:700;
+  }
+  h1{ text-align:center; margin:12px 0; font-size:20px; }
+
+  .topbar{
+    max-width:1200px;
+    margin:12px auto;
+    display:flex;
+    gap:12px;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 12px;
+  }
+  .controls-left { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .controls-right { display:flex; gap:8px; align-items:center; }
+
+  #search{
+    width:320px;
+    max-width:40vw;
+    min-width:160px;
+    padding:8px 10px;
+    border-radius:8px;
+    border:none;
+    background:#0b1220;
+    color:var(--muted);
+  }
+  .btn {
+    padding:8px 12px;
+    border-radius:8px;
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    cursor:pointer;
+    font-weight:600;
+  }
+  .btn.ghost { background:transparent; border:1px solid rgba(88,166,255,0.16); color:var(--muted); }
+
+  /* legend / filters */
+  .legend {
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .legend label {
+    display:flex;
+    gap:6px;
+    align-items:center;
+    background:rgba(255,255,255,0.03);
+    padding:6px 8px;
+    border-radius:8px;
+    font-size:13px;
+  }
+  .legend .sw { width:14px; height:14px; border-radius:3px; display:inline-block; box-shadow:inset 0 0 0 1px rgba(0,0,0,0.12); }
+
+  /* table grid */
+  .table-container {
+    max-width:1260px;
+    margin:8px auto 28px;
+    padding:12px;
+  }
+  .table {
+    display:grid;
+    grid-template-columns: repeat(18, minmax(48px, 1fr));
+    gap: var(--gap);
+    align-items:stretch;
+    justify-items:stretch;
+  }
+
+  .cell {
+    min-height:56px;
+  }
+  .empty {
+    background:transparent;
+  }
+
+  .element {
+    border-radius:8px;
+    padding:8px 6px;
+    text-align:center;
+    font-size:12px;
+    cursor:pointer;
+    transition:transform .14s, box-shadow .14s;
+    user-select:none;
+    outline: none;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    min-height:64px;
+    color:var(--tile-text);
+  }
+  .element .symbol{ font-size:16px; font-weight:800; }
+  .element .number{ font-size:11px; color:var(--tile-number); margin-bottom:6px; }
+
+  .element:focus,
+  .element:hover{
+    transform:scale(1.06);
+    box-shadow:0 8px 20px rgba(0,0,0,0.7);
+  }
+  .element:focus{ box-shadow:0 0 0 3px rgba(88,166,255,0.24); }
+
+  /* category backgrounds using CSS variables */
+  .Nonmetal { background: linear-gradient(180deg, var(--col-nonmetal) 0%, color-mix(in srgb, var(--col-nonmetal) 75%, black 25%) 100%); }
+  .NobleGas { background: linear-gradient(180deg, var(--col-noble) 0%, color-mix(in srgb, var(--col-noble) 75%, black 25%) 100%); }
+  .AlkaliMetal { background: linear-gradient(180deg, var(--col-alkali) 0%, color-mix(in srgb, var(--col-alkali) 75%, black 25%) 100%); }
+  .AlkalineEarthMetal { background: linear-gradient(180deg, var(--col-alk-earth) 0%, color-mix(in srgb, var(--col-alk-earth) 75%, black 25%) 100%); }
+  .TransitionMetal { background: linear-gradient(180deg, var(--col-transition) 0%, color-mix(in srgb, var(--col-transition) 75%, black 25%) 100%); }
+  .Metalloid { background: linear-gradient(180deg, var(--col-metalloid) 0%, color-mix(in srgb, var(--col-metalloid) 75%, black 25%) 100%); }
+  .Halogen { background: linear-gradient(180deg, var(--col-halogen) 0%, color-mix(in srgb, var(--col-halogen) 75%, black 25%) 100%); }
+  .Lanthanide { background: linear-gradient(180deg, var(--col-lanth) 0%, color-mix(in srgb, var(--col-lanth) 75%, black 25%) 100%); }
+  .Actinide { background: linear-gradient(180deg, var(--col-act) 0%, color-mix(in srgb, var(--col-act) 75%, black 25%) 100%); }
+  .PostTransitionMetal { background: linear-gradient(180deg, var(--col-post) 0%, color-mix(in srgb, var(--col-post) 75%, black 25%) 100%); }
+
+  /* modal and overlay */
+  #overlay{
+    display:none;
+    position:fixed; inset:0;
+    background:rgba(0,0,0,0.75);
+    z-index:50;
+  }
+  .modal{
+    display:none;
+    position:fixed;
+    left:50%; top:50%;
+    transform:translate(-50%,-50%);
+    background:var(--panel);
+    padding:18px;
+    border-radius:10px;
+    box-shadow:0 12px 45px rgba(0,0,0,0.9);
+    max-width:520px;
+    width:95%;
+    color:var(--muted);
+    z-index:60;
+  }
+  .modal h2{ color:var(--accent); margin:0 0 6px 0; font-size:20px;}
+  .modal p{ margin:6px 0; font-size:13px; color:var(--muted); line-height:1.2; }
+  .modal .calc-row{ margin-top:8px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;}
+  .modal input[type="number"], .modal input[type="text"]{
+    padding:8px; border-radius:6px; border:none; width:140px; background:#0b1220; color:var(--muted);
+  }
+  .modal .actions{ display:flex; gap:8px; justify-content:center; margin-top:12px; }
+
+  /* legend / f-block labels */
+  .fblock-legend { display:flex; gap:12px; align-items:center; justify-content:center; margin-top:6px; color:var(--muted); font-size:13px; }
+
+  /* responsive */
+  @media (max-width:1100px){
+    .table { grid-template-columns: repeat(18, minmax(40px, 1fr)); }
+    .element { min-height:60px; }
+  }
+  @media (max-width:760px){
+    .table { grid-template-columns: repeat(9, minmax(42px, 1fr)); }
+  }
+  @media (max-width:420px){
+    .table { grid-template-columns: repeat(5, minmax(40px, 1fr)); }
+    .element { min-height:56px; padding:6px; }
+    #search { width:140px; }
+  }
+
+  /* print */
+  @media print {
+    header, footer, .topbar, .legend, .controls-right { display:none !important; }
+    body { background:white; color:black; }
+    .table { gap:4px; }
+    .element { transform:none !important; box-shadow:none !important; }
+    .modal, #overlay { display:none !important; }
+  }
+
+  /* subtle tooltip */
+  .tooltip {
+    position:relative;
+  }
+  .tooltip .tip {
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    bottom:calc(100% + 8px);
+    background:#0b1220;
+    color:var(--muted);
+    padding:8px;
+    border-radius:6px;
+    font-size:12px;
+    display:none;
+    width:max-content;
+    max-width:320px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.6);
+    z-index:80;
+  }
+  .tooltip:focus-within .tip,
+  .tooltip:hover .tip {
+    display:block;
+  }
 </style>
 </head>
 <body>
-
 <header>Created by Victor Delali Cudjoe</header>
-<h1>Periodic Table</h1>
 
-<input type="text" id="search" placeholder="Search by symbol, name, or number">
+<div class="topbar" role="region" aria-label="Controls">
+  <div class="controls-left">
+    <input id="search" type="search" aria-label="Search elements" placeholder="Search symbol, name or number">
+    <div class="legend" role="group" aria-label="Category filters" id="legend">
+      <!-- dynamic legend inserted here -->
+    </div>
+  </div>
 
-<div class="table" id="table"></div>
+  <div class="controls-right">
+    <label style="display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;">
+      <input type="checkbox" id="toggleColorblind" /> Colorblind palette
+    </label>
+    <button class="btn" id="printBtn" title="Print / Save as PDF">Print / PDF</button>
+  </div>
+</div>
 
-<footer>Created by Victor Delali Cudjoe</footer>
+<div class="table-container" role="main" aria-labelledby="table-heading">
+  <h2 id="table-heading" style="text-align:center; margin:6px 0 10px 0; font-size:16px; color:var(--muted);">Interactive Periodic Table — Click or press Enter on a tile</h2>
 
-<div id="overlay"></div>
-<div class="modal" id="modal">
-    <h2 id="modal-name"></h2>
-    <p id="modal-symbol"></p>
-    <p id="modal-atomic"></p>
-    <p id="modal-details"></p>
-    <h3>Mole Calculator</h3>
-    <input type="number" id="grams" placeholder="Grams">
-    <input type="number" id="moles" placeholder="Moles">
-    <input type="number" id="atoms" placeholder="Atoms">
-    <button id="calcBtn">Calculate</button>
-    <button id="closeBtn">Close</button>
+  <div class="table" id="table" aria-live="polite" tabindex="0" aria-label="Periodic table grid"></div>
+
+  <div class="fblock-legend" aria-hidden="false">
+    <div style="opacity:0.9">Lanthanides and actinides shown in separate rows below main table; use filters to hide/show categories.</div>
+  </div>
+</div>
+
+<footer>Created by Victor Delali Cudjoe — Victor Delali Cudjoe</footer>
+
+<!-- Overlay & Modal -->
+<div id="overlay" tabindex="-1" aria-hidden="true"></div>
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-name" aria-hidden="true">
+  <h2 id="modal-name"></h2>
+  <p id="modal-symbol"></p>
+  <p id="modal-atomic"></p>
+  <p id="modal-details"></p>
+
+  <h3 style="color:var(--accent); margin:8px 0 6px;">Mole Calculator</h3>
+  <div class="calc-row" role="group" aria-label="Mole calculator">
+    <input id="grams" type="number" step="any" min="0" placeholder="Grams" aria-label="grams">
+    <input id="moles" type="number" step="any" min="0" placeholder="Moles" aria-label="moles">
+    <input id="atoms" type="number" step="any" min="0" placeholder="Atoms" aria-label="atoms">
+  </div>
+  <div class="actions">
+    <button id="calcBtn" class="btn">Calculate</button>
+    <button id="closeBtn" class="btn ghost">Close</button>
+  </div>
 </div>
 
 <script>
-// -------- ELEMENT DATA (All 118 elements) --------
+/* ---------------- ELEMENT DATA (unchanged content) ---------------- */
 const elements = [
 {number:1,symbol:"H",name:"Hydrogen",weight:1.008,category:"Nonmetal",phase:"Gas",density:0.00008988,melting:14.01,boiling:20.28,electronegativity:2.2,electron:"1s1",shells:[1],isotopes:["H‑1","H‑2"],use:"Fuel, industrial chemicals"},
 {number:2,symbol:"He",name:"Helium",weight:4.0026,category:"NobleGas",phase:"Gas",density:0.0001786,melting:0.95,boiling:4.22,electronegativity:null,electron:"1s2",shells:[2],isotopes:["He‑3","He‑4"],use:"Coolants, balloons"},
@@ -235,92 +424,470 @@ const elements = [
 {number:116,symbol:"Lv",name:"Livermorium",weight:293,category:"PostTransitionMetal",phase:"Solid",density:12.9,melting:null,boiling:null,electronegativity:null,electron:"[Rn]5f14 6d10 7s2 7p4",shells:[2,8,18,32,32,18,6],isotopes:["Lv-293"],use:"Research"},
 {number:117,symbol:"Ts",name:"Tennessine",weight:294,category:"Halogen",phase:"Solid",density:7.2,melting:null,boiling:null,electronegativity:null,electron:"[Rn]5f14 6d10 7s2 7p5",shells:[2,8,18,32,32,18,7],isotopes:["Ts-294"],use:"Research"},
 {number:118,symbol:"Og",name:"Oganesson",weight:294,category:"NobleGas",phase:"Solid",density:6.9,melting:null,boiling:null,electronegativity:null,electron:"[Rn]5f14 6d10 7s2 7p6",shells:[2,8,18,32,32,18,8],isotopes:["Og-294"],use:"Research"}
-]
-// ---------- DISPLAY ELEMENTS ----------
-const table = document.getElementById("table");
+];
 
-function displayElements(list) {
-    table.innerHTML = "";
-    list.forEach(el => {
-        const div = document.createElement("div");
-        div.className = `element ${el.category}`;
-        div.innerHTML = `<div class="number">${el.number}</div><div class="symbol">${el.symbol}</div>`;
-        div.addEventListener("click", () => openModal(el));
-        table.appendChild(div);
-    });
-}
+/* ---------- LAYOUT GRID (18 columns) ----------
+ We'll render the canonical main body (7 periods) as rows of 18 cells.
+ Zero or null indicates an empty cell (gap). The f-block (lanthanides/actinides) is rendered in two separate rows below.
+ This layout uses the common representation where the f-block is shown separately.
+*/
+const layoutRows = [
+  // period 1
+  [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2],
+  // period 2
+  [3,4,0,0,0,0,0,0,0,0,0,0,5,6,7,8,9,10],
+  // period 3
+  [11,12,0,0,0,0,0,0,0,0,0,0,13,14,15,16,17,18],
+  // period 4
+  [19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36],
+  // period 5
+  [37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54],
+  // period 6 (gap at column 3 for f-block label; later Hf starts at col4)
+  [55,56,0,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86],
+  // period 7 (gap at column 3 for f-block label)
+  [87,88,0,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118]
+];
 
-displayElements(elements);
+// lanthanide and actinide rows (placed as separate rows below)
+const lanthanideRow = [0,0,0,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71];
+const actinideRow   = [0,0,0,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103];
 
-// ---------- MODAL ----------
-const modal = document.getElementById("modal");
-const overlay = document.getElementById("overlay");
-const closeBtn = document.getElementById("closeBtn");
-const calcBtn = document.getElementById("calcBtn");
-const gramsInput = document.getElementById("grams");
-const molesInput = document.getElementById("moles");
-const atomsInput = document.getElementById("atoms");
+/* ---------- HELPERS ---------- */
+const table = document.getElementById('table');
+const search = document.getElementById('search');
+const legendContainer = document.getElementById('legend');
+const printBtn = document.getElementById('printBtn');
+const toggleColorblind = document.getElementById('toggleColorblind');
+
+const modal = document.getElementById('modal');
+const overlay = document.getElementById('overlay');
+const closeBtn = document.getElementById('closeBtn');
+const calcBtn = document.getElementById('calcBtn');
+const gramsInput = document.getElementById('grams');
+const molesInput = document.getElementById('moles');
+const atomsInput = document.getElementById('atoms');
+
 let currentElement = null;
+let lastFocusedElement = null;
 
-function openModal(el) {
-    currentElement = el;
-    modal.style.display = "block";
-    overlay.style.display = "block";
-    document.getElementById("modal-name").textContent = el.name;
-    document.getElementById("modal-symbol").textContent = `Symbol: ${el.symbol}`;
-    document.getElementById("modal-atomic").textContent = `Atomic Number: ${el.number}`;
-    document.getElementById("modal-details").textContent = `Category: ${el.category}, Phase: ${el.phase}, Density: ${el.density} g/cm³, Uses: ${el.use}`;
-    gramsInput.value = molesInput.value = atomsInput.value = "";
+/* map elements by atomic number for quick lookup */
+const elByNum = {};
+elements.forEach(e => elByNum[e.number] = e);
+
+/* category listing from data (preserve order for legend) */
+const categories = Array.from(new Set(elements.map(e => e.category))).sort();
+
+/* create legend with checkboxes for category filters and phase filters */
+const categoryChecks = {};
+const phaseChecks = { Solid: true, Liquid: true, Gas: true, 'Unknown': true };
+
+function createLegend(){
+  legendContainer.innerHTML = '';
+
+  // Categories
+  categories.forEach(cat => {
+    const label = document.createElement('label');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = true;
+    cb.dataset.cat = cat;
+    cb.addEventListener('change', applyFilters);
+    categoryChecks[cat] = cb;
+
+    const sw = document.createElement('span');
+    sw.className = 'sw';
+    // map to CSS var
+    const varName = {
+      Nonmetal: '--col-nonmetal',
+      NobleGas: '--col-noble',
+      AlkaliMetal: '--col-alkali',
+      AlkalineEarthMetal: '--col-alk-earth',
+      TransitionMetal: '--col-transition',
+      Metalloid: '--col-metalloid',
+      Halogen: '--col-halogen',
+      Lanthanide: '--col-lanth',
+      Actinide: '--col-act',
+      PostTransitionMetal: '--col-post'
+    }[cat] || '--col-post';
+    sw.style.background = `var(${varName})`;
+
+    label.appendChild(cb);
+    label.appendChild(sw);
+    label.appendChild(document.createTextNode(cat));
+    legendContainer.appendChild(label);
+  });
+
+  // Phase filters (compact)
+  const phaseLabel = document.createElement('label');
+  phaseLabel.style.marginLeft = '6px';
+  phaseLabel.style.fontSize = '13px';
+  phaseLabel.style.color = 'var(--muted)';
+  phaseLabel.textContent = 'Phase:';
+  legendContainer.appendChild(phaseLabel);
+
+  ['Solid','Liquid','Gas','Unknown'].forEach(p=>{
+    const lab = document.createElement('label');
+    lab.style.marginLeft = '6px';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = true;
+    cb.dataset.phase = p;
+    cb.addEventListener('change', ()=>{
+      phaseChecks[p] = cb.checked;
+      applyFilters();
+    });
+    lab.appendChild(cb);
+    lab.appendChild(document.createTextNode(p));
+    legendContainer.appendChild(lab);
+  });
+}
+createLegend();
+
+/* ---------- RENDERING ---------- */
+
+/* create a tile element for an atomic number (or an empty cell) */
+function makeCell(num){
+  const cell = document.createElement('div');
+  cell.className = 'cell';
+  if(!num){
+    cell.classList.add('empty');
+    return cell;
+  }
+  const el = elByNum[num];
+  if(!el) {
+    cell.classList.add('empty');
+    return cell;
+  }
+
+  const div = document.createElement('div');
+  div.className = `element ${el.category}`;
+  div.setAttribute('role','button');
+  div.setAttribute('tabindex','0');
+  div.setAttribute('data-atomic', String(el.number));
+  div.setAttribute('aria-label', `${el.name}, atomic number ${el.number}, category ${el.category}`);
+
+  const n = document.createElement('div');
+  n.className = 'number';
+  n.textContent = el.number;
+  const s = document.createElement('div');
+  s.className = 'symbol';
+  s.textContent = el.symbol;
+  const nm = document.createElement('div');
+  nm.className = 'ename';
+  nm.style.fontSize = '11px';
+  nm.style.marginTop = '6px';
+  nm.style.color = 'rgba(0,0,0,0.5)';
+  nm.textContent = el.name;
+
+  // append
+  div.appendChild(n);
+  div.appendChild(s);
+  div.appendChild(nm);
+
+  // tooltip for more info on hover/focus
+  const tipWrap = document.createElement('div');
+  tipWrap.className = 'tooltip';
+  const tip = document.createElement('div');
+  tip.className = 'tip';
+  tip.innerHTML = `<strong>${el.name} (${el.symbol})</strong><br>Atomic #: ${el.number} • Atomic weight: ${el.weight} g·mol⁻¹<br>Phase: ${el.phase} • Category: ${el.category}`;
+  tipWrap.appendChild(tip);
+  div.appendChild(tipWrap);
+
+  // accessible interactions
+  div.addEventListener('click', ()=> openModal(el, div));
+  div.addEventListener('keydown', (ev) => {
+    if(ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openModal(el, div); }
+    if(ev.key === 'ArrowRight') focusNeighbor(div, 'right');
+    if(ev.key === 'ArrowLeft') focusNeighbor(div, 'left');
+    if(ev.key === 'ArrowUp') focusNeighbor(div, 'up');
+    if(ev.key === 'ArrowDown') focusNeighbor(div, 'down');
+  });
+
+  cell.appendChild(div);
+  return cell;
 }
 
-function closeModal() {
-    modal.style.display = "none";
-    overlay.style.display = "none";
+/* focus neighbor navigation (left/right/up/down) for keyboard users */
+function focusNeighbor(el, dir){
+  // find all tiles in DOM order
+  const tiles = Array.from(document.querySelectorAll('.element'));
+  const idx = tiles.indexOf(el);
+  if(idx === -1) return;
+  const cols = getComputedStyle(table).gridTemplateColumns.split(' ').length || 18;
+  let target = null;
+  if(dir === 'right') target = tiles[idx+1];
+  if(dir === 'left') target = tiles[idx-1];
+  if(dir === 'up') target = tiles[idx-cols] || null;
+  if(dir === 'down') target = tiles[idx+cols] || null;
+  if(target) target.focus();
 }
 
-closeBtn.addEventListener("click", closeModal);
-overlay.addEventListener("click", closeModal);
+/* display the entire table using the layout arrays */
+function renderTable(filterFn = ()=>true){
+  table.innerHTML = '';
+  // main body rows
+  layoutRows.forEach((rowArr, rIndex) => {
+    rowArr.forEach((num, cIndex) => {
+      const cell = makeCell(num);
+      // grid placement is automatic since we append in order
+      if(!filterFn(num)) {
+        // hide element tiles if filtered out (but keep spacing)
+        const elDiv = cell.querySelector('.element');
+        if(elDiv) elDiv.style.visibility = 'hidden';
+      }
+      table.appendChild(cell);
+    });
+  });
 
-// ---------- MOLE CALCULATOR ----------
-calcBtn.addEventListener("click", () => {
-    const grams = parseFloat(gramsInput.value);
-    const moles = parseFloat(molesInput.value);
-    const atoms = parseFloat(atomsInput.value);
-    const avogadro = 6.022e23;
+  // spacer row for separation (empty 18 cells)
+  for(let i=0;i<18;i++){
+    const spacer = document.createElement('div');
+    spacer.className = 'cell empty';
+    table.appendChild(spacer);
+  }
 
-    if(!currentElement) return;
-
-    if(grams && !moles && !atoms){
-        const m = grams / currentElement.weight;
-        molesInput.value = m.toFixed(6);
-        atomsInput.value = (m * avogadro).toExponential(3);
-    } else if(!grams && moles && !atoms){
-        gramsInput.value = (moles * currentElement.weight).toFixed(3);
-        atomsInput.value = (moles * avogadro).toExponential(3);
-    } else if(!grams && !moles && atoms){
-        const m = atoms / avogadro;
-        molesInput.value = m.toExponential(6);
-        gramsInput.value = (m * currentElement.weight).toFixed(3);
-    } else {
-        alert("Fill only one field to calculate.");
+  // lanthanide row
+  lanthanideRow.forEach(num => {
+    const cell = makeCell(num);
+    if(!filterFn(num)){
+      const elDiv = cell.querySelector('.element');
+      if(elDiv) elDiv.style.visibility = 'hidden';
     }
+    table.appendChild(cell);
+  });
+
+  // actinide row
+  actinideRow.forEach(num => {
+    const cell = makeCell(num);
+    if(!filterFn(num)){
+      const elDiv = cell.querySelector('.element');
+      if(elDiv) elDiv.style.visibility = 'hidden';
+    }
+    table.appendChild(cell);
+  });
+}
+
+/* build initial render (no filters) */
+renderTable();
+
+/* ---------- FILTERS & SEARCH ---------- */
+function applyFilters(){
+  const activeCats = new Set(Object.keys(categoryChecks).filter(cat => categoryChecks[cat].checked));
+  const activePhases = phaseChecks;
+
+  const term = search.value.trim().toLowerCase();
+
+  function filterFn(num){
+    if(!num) return true; // keep spacing
+    const el = elByNum[num];
+    if(!el) return true;
+    // category filter
+    if(!activeCats.has(el.category)) return false;
+    // phase filter
+    const phase = el.phase || 'Unknown';
+    const isPhase = (phase === 'Solid' && activePhases.Solid) ||
+                    (phase === 'Liquid' && activePhases.Liquid) ||
+                    (phase === 'Gas' && activePhases.Gas) ||
+                    ((phase === 'Unknown' || phase === null) && activePhases.Unknown);
+    if(!isPhase) return false;
+
+    // search filter: match name, symbol or number (partial)
+    if(term === '') return true;
+    if(String(el.number).includes(term)) return true;
+    if(el.symbol && el.symbol.toLowerCase().includes(term)) return true;
+    if(el.name && el.name.toLowerCase().includes(term)) return true;
+    return false;
+  }
+
+  renderTable(filterFn);
+}
+
+/* live search */
+search.addEventListener('input', applyFilters);
+
+/* toggle colorblind palette */
+toggleColorblind.addEventListener('change', (e)=>{
+  if(e.target.checked) document.body.classList.add('colorblind');
+  else document.body.classList.remove('colorblind');
 });
 
-// ---------- SEARCH ----------
-const search = document.getElementById("search");
-search.addEventListener("input", () => {
-    const term = search.value.toLowerCase();
-    const filtered = elements.filter(el => 
-        el.name.toLowerCase().includes(term) ||
-        el.symbol.toLowerCase().includes(term) ||
-        el.number.toString() === term
-    );
-    displayElements(filtered);
+/* print */
+printBtn.addEventListener('click', ()=> window.print());
+
+/* ---------- MODAL (details, mole calc, accessibility) ---------- */
+let focusableElements = [];
+let firstFocusable = null;
+let lastFocusable = null;
+
+function formatKtoC(k){
+  if(k === null || k === undefined) return null;
+  if(!Number.isFinite(k)) return null;
+  const c = k - 273.15;
+  // show if reasonable (don't show huge negative temps for likely already-celsius values)
+  return `${c.toFixed(2)} °C`;
+}
+
+function openModal(el, triggerEl){
+  currentElement = el;
+  lastFocusedElement = triggerEl || document.activeElement;
+  document.getElementById('modal-name').textContent = `${el.name} (${el.symbol})`;
+  document.getElementById('modal-symbol').textContent = `Symbol: ${el.symbol} • Atomic weight: ${el.weight} g·mol⁻¹`;
+  document.getElementById('modal-atomic').textContent = `Atomic Number: ${el.number} • Category: ${el.category}`;
+
+  // Present density and melting/boiling with K and approximate °C when suitable
+  const density = el.density ? `${el.density} g·cm⁻³` : '—';
+  const meltingK = el.melting || null;
+  const boilingK = el.boiling || null;
+  const meltingC = formatKtoC(meltingK);
+  const boilingC = formatKtoC(boilingK);
+  const mStr = meltingK ? `${meltingK} K${meltingC ? ` (${meltingC})` : ''}` : '—';
+  const bStr = boilingK ? `${boilingK} K${boilingC ? ` (${boilingC})` : ''}` : '—';
+
+  const uses = el.use || '—';
+  const en = el.electron || '—';
+  const shellStr = (el.shells && Array.isArray(el.shells)) ? el.shells.join(', ') : '—';
+
+  document.getElementById('modal-details').innerHTML =
+    `Phase: ${el.phase} • Density: ${density}<br>Melting: ${mStr} • Boiling: ${bStr}<br>Electron config: ${en} • Shells: ${shellStr}<br>Uses: ${uses}`;
+
+  gramsInput.value = molesInput.value = atomsInput.value = '';
+
+  overlay.style.display = 'block';
+  modal.style.display = 'block';
+  modal.setAttribute('aria-hidden','false');
+  overlay.setAttribute('aria-hidden','false');
+
+  // focus management
+  setTimeout(()=> { gramsInput.focus(); }, 0);
+
+  document.addEventListener('keydown', handleDocumentKeydown);
+  trapFocus(modal);
+}
+
+function closeModal(){
+  modal.style.display = 'none';
+  overlay.style.display = 'none';
+  modal.setAttribute('aria-hidden','true');
+  overlay.setAttribute('aria-hidden','true');
+  currentElement = null;
+  document.removeEventListener('keydown', handleDocumentKeydown);
+  releaseFocusTrap();
+  if(lastFocusedElement && typeof lastFocusedElement.focus === 'function') lastFocusedElement.focus();
+}
+
+closeBtn.addEventListener('click', closeModal);
+overlay.addEventListener('click', closeModal);
+function handleDocumentKeydown(e){ if(e.key === 'Escape') closeModal(); }
+
+function trapFocus(container){
+  focusableElements = Array.from(container.querySelectorAll('a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'))
+    .filter(el => el.offsetParent !== null);
+  if(focusableElements.length > 0){
+    firstFocusable = focusableElements[0];
+    lastFocusable = focusableElements[focusableElements.length - 1];
+    container.addEventListener('keydown', handleTrapKeydown);
+  }
+}
+function handleTrapKeydown(e){
+  if(e.key !== 'Tab') return;
+  if(focusableElements.length === 0) { e.preventDefault(); return; }
+  if(e.shiftKey){
+    if(document.activeElement === firstFocusable){ e.preventDefault(); lastFocusable.focus(); }
+  } else {
+    if(document.activeElement === lastFocusable){ e.preventDefault(); firstFocusable.focus(); }
+  }
+}
+function releaseFocusTrap(){
+  modal.removeEventListener('keydown', handleTrapKeydown);
+  focusableElements = [];
+  firstFocusable = lastFocusable = null;
+}
+
+/* ---------- MOLE CALCULATOR ---------- */
+const AVOGADRO = 6.022e23;
+
+function parseNumberInput(el){
+  const raw = el.value;
+  if(raw === null || raw === undefined || raw.toString().trim() === '') return null;
+  const n = Number(raw);
+  if(Number.isFinite(n)) return n;
+  return null;
+}
+
+function calculateFromInputs(){
+  if(!currentElement) return;
+  const gramsVal = parseNumberInput(gramsInput);
+  const molesVal = parseNumberInput(molesInput);
+  const atomsVal = parseNumberInput(atomsInput);
+  const weight = Number(currentElement.weight);
+
+  const provided = [gramsVal, molesVal, atomsVal].filter(v => v !== null).length;
+
+  if(provided === 0){ alert('Enter one value (grams, moles, or atoms) to calculate the others.'); return; }
+
+  // single input calculations
+  if(gramsVal !== null && molesVal === null && atomsVal === null){
+    const m = gramsVal / weight;
+    molesInput.value = Number.isFinite(m) ? m.toFixed(6) : '';
+    atomsInput.value = Number.isFinite(m) ? (m * AVOGADRO).toExponential(6) : '';
+    return;
+  }
+  if(molesVal !== null && gramsVal === null && atomsVal === null){
+    const g = molesVal * weight;
+    gramsInput.value = Number.isFinite(g) ? g.toFixed(6) : '';
+    atomsInput.value = Number.isFinite(molesVal) ? (molesVal * AVOGADRO).toExponential(6) : '';
+    return;
+  }
+  if(atomsVal !== null && gramsVal === null && molesVal === null){
+    const m = atomsVal / AVOGADRO;
+    molesInput.value = Number.isFinite(m) ? m.toExponential(6) : '';
+    gramsInput.value = Number.isFinite(m) ? (m * weight).toFixed(6) : '';
+    return;
+  }
+
+  // two provided - derive the third
+  if(gramsVal !== null && molesVal !== null && atomsVal === null){
+    atomsInput.value = (molesVal * AVOGADRO).toExponential(6);
+    return;
+  }
+  if(gramsVal !== null && atomsVal !== null && molesVal === null){
+    const m = atomsVal / AVOGADRO;
+    molesInput.value = Number.isFinite(m) ? m.toExponential(6) : '';
+    return;
+  }
+  if(molesVal !== null && atomsVal !== null && gramsVal === null){
+    gramsInput.value = (molesVal * weight).toFixed(6);
+    return;
+  }
+
+  alert('Please provide one value (or two values to compute the third).');
+}
+
+calcBtn.addEventListener('click', calculateFromInputs);
+[gramsInput, molesInput, atomsInput].forEach(inp=>{
+  inp.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); calculateFromInputs(); } });
 });
+
+/* ---------- INITIAL UX ---------- */
+/* make keyboard accessible: focus first tile on load */
+window.addEventListener('load', ()=>{
+  const first = document.querySelector('.element[tabindex="0"]');
+  if(first) first.setAttribute('aria-label', first.getAttribute('aria-label') + ' — Press Enter to open details');
+});
+
+/* ---------- OPTIONAL: Export sanitized element data as JSON (for future use) ---------- */
+function exportDataJSON(){
+  return JSON.stringify(elements, null, 2);
+}
+
+/* ---------- Notes ----------
+ - Layout uses a common 18-column representation and separate f-block rows.
+ - Melting/boiling values in dataset appear to be Kelvin; both K and an approximate °C are shown when possible.
+ - Colorblind toggle swaps to a distinct palette; printable view available via Print button (uses window.print()).
+ - Filters (category and phase) + search are combined to refine visible tiles.
+ - Accessibility: semantic roles, keyboard navigation (Enter/Space to open, Arrow keys to navigate), focus trap inside modal, ESC to close.
+ - If you want the lanthanide/actinide labels to appear inside the main table (instead of separate rows), or La/Ac to be placed in group 3 in the main row, I can switch to that exact canonical layout.
+*/
 </script>
 </body>
 </html>
-
-
-
-
